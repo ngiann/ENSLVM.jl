@@ -1,12 +1,20 @@
 function enslvm_spectra2(X, C; labels=nothing, K = 10, M = 10, Q = 2, iterations = 1, seed = 1, α = 0.1, η = 1.0)
 
+    # fix random seed
+
     rg = MersenneTwister(seed)
+
+    # sort out dimensions
 
     D, N = size(X); @assert(size(X) == size(C))
     
 
-    # randomly initialise network parameters
+    #-------------------------------------------
+    # Initialisations
+    #-------------------------------------------
     
+    # random weights
+
     W = let 
 
         t(x) = softmax(x, dims=1)
@@ -18,13 +26,17 @@ function enslvm_spectra2(X, C; labels=nothing, K = 10, M = 10, Q = 2, iterations
     end
 
 
-    # randomly initialise latent
+    # randomly latent
 
     Z = randn(rg, Q, N)
     
+
     # initialise scalings
 
     scales = ones(N)
+
+
+    # call model with initialised parameters
 
     enslvm_spectra2(X, C, W, Z, scales; labels=labels, K = K, M = M, Q = Q, iterations = iterations, seed = seed, α = α, η = η)
 
@@ -33,6 +45,8 @@ end
 
 function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 2, iterations = 1, seed = 1, α = 0.1, η = 1.0)
 
+    # sort out dimensions
+    
     D, N = size(X); @assert(size(X) == size(C))
 
     # report
