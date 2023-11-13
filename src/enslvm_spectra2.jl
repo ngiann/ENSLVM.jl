@@ -46,7 +46,7 @@ end
 function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 2, iterations = 1, seed = 1, α = 0.1, η = 1.0)
 
     # sort out dimensions
-    
+
     D, N = size(X); @assert(size(X) == size(C))
 
     # report
@@ -202,6 +202,11 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
         @printf("Iteration %d, ensemble performance is %f\n", iter, ensemble_performance(W, Z, scales))
 
     end
+
+
+    #-------------------------------------------------
+    # return results
+    #-------------------------------------------------
 
     z -> F(W, z), W, Z, scales
     
