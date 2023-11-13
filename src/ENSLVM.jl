@@ -24,8 +24,8 @@ module ENSLVM
 
     export enslvm_spectra
 
-    include("ensemblehessian.jl")
+    # include("ensemblehessian.jl")
 
-    export ensemblehessian
+    # export ensemblehessian
 
 end
