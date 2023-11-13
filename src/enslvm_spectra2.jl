@@ -40,7 +40,7 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
     @printf("Running enslvm_spectra2 with K=%d and data of %d number of data items of dimension %d\n", K, N, D)
 
 
-    # define ensemnle output
+    # define ensemble output
 
     t(x) = softmax(x, dims=1)
 
@@ -50,13 +50,19 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
     
     B = bootstrapweights(K, N; rg = MersenneTwister(seed))
 
+
+    #-------------------------------------------
     function pack(Zₙ, sₙ) 
+    #-------------------------------------------
 
         [vec(Zₙ); sqrt(sₙ)]
 
     end
 
-    function unpack(p) 
+
+    #-------------------------------------------
+    function unpack(p)
+    #------------------------------------------- 
 
         p[1:end-1], p[end]^2
 
@@ -79,11 +85,11 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
             
         end
 
-        # penalty on coordinates
+        # penalty on coordinate
 
         aux += η*sum(abs2.(Zₙ))
 
-        aux
+        return aux
 
     end
 
@@ -96,7 +102,7 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
         
         local diff = X - gₖ(Z)*Diagonal(s)
 
-        sum((abs2.(diff) ./ C)*Diagonal(b)) + α*sum(abs2.(w))
+        sum((abs2.(diff) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
 
     end
 
