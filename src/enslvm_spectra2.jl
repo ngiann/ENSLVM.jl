@@ -128,7 +128,7 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
         local aux = 0.0
 
         for k in 1:K
-            
+
             diff = X - f(W[k], Z)*Diagonal(s)
 
             aux += sum((abs2.(diff) ./ C)*Diagonal(B[k]))
@@ -138,6 +138,8 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
         return aux / K
 
     end
+
+
 
 
     for iter in 1:iterations
@@ -208,7 +210,19 @@ function enslvm_spectra2(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q =
     # return results
     #-------------------------------------------------
 
-    z -> F(W, z), W, Z, scales
+    function predict(z)
+        
+        # local predₖ = map(w->f(w, z), W)
+        
+        # mean(predₖ), std(predₖ)
+
+        F(W,z)
+
+    end
+
+    #predict(k,z) = f(W[k], z)
+    
+    predict, W, Z, scales, B
     
 end
 
