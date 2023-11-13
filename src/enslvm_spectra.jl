@@ -1,12 +1,20 @@
 function enslvm_spectra(X, C; labels=nothing, K = 10, M = 10, Q = 2, iterations = 1, seed = 1, α = 0.1, η = 1.0)
 
+    # fix random seed
+
     rg = MersenneTwister(seed)
 
-    N = length(X); @assert(N == length(C))
-    D = length(X[1])
+    # sort out dimensions
 
-    # randomly initialise network parameters
+    D, N = size(X); @assert(size(X) == size(C))
     
+
+    #-------------------------------------------
+    # Initialisations
+    #-------------------------------------------
+    
+    # random weights
+
     W = let 
 
         t(x) = softmax(x, dims=1)
@@ -18,13 +26,17 @@ function enslvm_spectra(X, C; labels=nothing, K = 10, M = 10, Q = 2, iterations 
     end
 
 
-    # randomly initialise latent
+    # randomly latent
 
-    Z = [randn(Q) for n in 1:N]
+    Z = randn(rg, Q, N)
     
+
     # initialise scalings
 
     scales = ones(N)
+
+
+    # call model with initialised parameters
 
     enslvm_spectra(X, C, W, Z, scales; labels=labels, K = K, M = M, Q = Q, iterations = iterations, seed = seed, α = α, η = η)
 
@@ -33,15 +45,17 @@ end
 
 function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 2, iterations = 1, seed = 1, α = 0.1, η = 1.0)
 
-    N = length(X); @assert(N == length(C))
-    D = length(X[1])
+    # sort out dimensions
+
+    D, N = size(X); @assert(size(X) == size(C))
 
     # report
 
     @printf("Running enslvm_spectra with K=%d and data of %d number of data items of dimension %d\n", K, N, D)
+    @printf("\t number of BLAS threads is %d\n", BLAS.get_num_threads())
+    @printf("\t number of julia threads is %d\n", Threads.nthreads())
 
-
-    # define ensemnle output
+    # define ensemble output
 
     t(x) = softmax(x, dims=1)
 
@@ -49,42 +63,53 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
     
     F(W, z) = mapreduce(w -> f(w, z), +, W) / K
     
-    B = bootstrapweights(K, N; rg = MersenneTwister(seed))
+    B = Matrix(reduce(hcat, bootstrapweights(K, N; rg = MersenneTwister(seed)))')
+    
 
+
+    #-------------------------------------------
     function pack(Zₙ, sₙ) 
+    #-------------------------------------------
 
         [vec(Zₙ); sqrt(sₙ)]
 
     end
 
-    function unpack(p) 
 
-        p[1:end-1], p[end]^2
+    #-------------------------------------------
+    function unpack(p)
+    #------------------------------------------- 
+
+        local Zₙ = @view p[1:end-1]
+        
+        local sₙ = p[end]^2
+
+        return Zₙ, sₙ
 
     end
 
 
     #-------------------------------------------
-    function objective_Zₙ(g, Zₙ, sₙ, n)
+    function objective_Zₙ(g, Xₙ, Cₙ, bₙ, p)
     #-------------------------------------------
+
+        local Zₙ, sₙ = unpack(p)
 
         @assert(length(Zₙ) == Q)
 
-        local aux = zero(eltype(Zₙ))
+        local aux = zero(eltype(p))
 
         for k in 1:K
 
-            diff = X[n] - sₙ * g[k](Zₙ)
-
-            aux += B[k][n] * sum(abs2.(diff) ./ C[n])
+            aux += bₙ[k] * sum(abs2.(Xₙ - sₙ * g[k](Zₙ)) ./ Cₙ)
             
         end
 
-        # penalty on coordinates
+        # penalty on coordinate
 
         aux += η*sum(abs2.(Zₙ))
 
-        aux
+        return aux
 
     end
 
@@ -93,21 +118,11 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
     function objective_single_member(w, Z, s, b)
     #-------------------------------------------
 
-        local aux = zero(eltype(w))
-
         local gₖ = f(w)
         
-        for n in 1:N
+        local diff = X - gₖ(Z)*Diagonal(s)
 
-            diff = X[n] - s[n] * gₖ(Z[n])
-
-            aux += b[n] * sum(abs2.(diff) ./ C[n])
-
-        end
-
-        aux += α*sum(abs2.(w))
-
-        return aux
+        sum((abs2.(diff) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
 
     end
 
@@ -118,17 +133,19 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
         local aux = 0.0
 
-        for k in 1:K, n in 1:N
+        for k in 1:K
 
-            diff = X[n] - s[n] * f(W[k], Z[n])
+            diff = X - f(W[k], Z)*Diagonal(s)
 
-            aux += sum(abs2.(diff) ./ C[n])
+            aux += sum((abs2.(diff) ./ C)*Diagonal(B[k,:]))
 
         end
 
         return aux / K
 
     end
+
+
 
 
     for iter in 1:iterations
@@ -145,19 +162,17 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
        
             local g = map(f, W)
 
-            Threads.@threads for n in 1:N
-            
-                let
+           Threads.@threads for n in 1:N
+                            
+                local Xₙ, Cₙ, bₙ = @view X[:,n], @view C[:,n], @view B[:,n]
 
-                    obj(x) = objective_Zₙ(g, unpack(x)..., n)
+                local obj(x) = objective_Zₙ(g, Xₙ, Cₙ, bₙ, x)
 
-                    grad!(s, x) = copyto!(s, Zygote.gradient(obj, x)[1])
+                local grad!(s, x) = copyto!(s, Zygote.gradient(obj, x)[1])
 
-                    result = optimize(obj, grad!, pack(Z[n], scales[n]), LBFGS(), optZ)
-                    
-                    Z[n], scales[n] = unpack(result.minimizer)
-
-                end
+                local result = optimize(obj, grad!, pack(Z[:,n], scales[n]), LBFGS(), optZ)
+                
+                Z[:,n], scales[n] = unpack(result.minimizer)
 
                 next!(pr)
 
@@ -167,9 +182,9 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
 
         
-        #-----------------------
-        # hold latent fixed
-        #-----------------------
+        #-------------------------------------------------
+        # hold latent fixed, optimise ensemble weights wₖ
+        #-------------------------------------------------
 
         pr = Progress(K, desc = "Ensemble members")
 
@@ -179,7 +194,9 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
             let
 
-                obj(w) = objective_single_member(w, Z, scales, B[k])
+                local b = @view B[k,:]
+             
+                obj(w) = objective_single_member(w, Z, scales, b)
                 
                 grad!(s, x) = copyto!(s, Zygote.gradient(obj, x)[1])
 
@@ -194,7 +211,24 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
     end
 
-    z -> F(W, z), W, Z, scales
+
+    #-------------------------------------------------
+    # return results
+    #-------------------------------------------------
+
+    function predict(z)
+        
+        # local predₖ = map(w->f(w, z), W)
+        
+        # mean(predₖ), std(predₖ)
+
+        F(W,z)
+
+    end
+
+    #predict(k,z) = f(W[k], z)
+    
+    predict, W, Z, scales, B
     
 end
 

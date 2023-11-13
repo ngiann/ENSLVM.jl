@@ -20,6 +20,10 @@ module ENSLVM
 
     export enslvm_spectra3
 
+    include("enslvm_spectra.jl") # ⟵ best so far
+
+    export enslvm_spectra
+
     include("ensemblehessian.jl")
 
     export ensemblehessian
