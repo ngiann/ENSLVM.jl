@@ -164,7 +164,11 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
            Threads.@threads for n in 1:N
                             
-                local Xₙ, Cₙ, bₙ = @view X[:,n], @view C[:,n], @view B[:,n]
+                local Xₙ = @view X[:,n]
+                
+                local Cₙ = @view C[:,n]
+
+                local bₙ = @view B[:,n]
 
                 local obj(x) = objective_Zₙ(g, Xₙ, Cₙ, bₙ, x)
 
