@@ -120,9 +120,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
         local gₖ = f(w)
         
-        local diff = X - gₖ(Z)*Diagonal(s)
-
-        sum((abs2.(diff) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
+        sum((abs2.(X - gₖ(Z)*Diagonal(s)) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
 
     end
 
@@ -135,9 +133,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
         for k in 1:K
 
-            diff = X - f(W[k], Z)*Diagonal(s)
-
-            aux += sum((abs2.(diff) ./ C)*Diagonal(B[k,:]))
+            aux += sum((abs2.(X - f(W[k], Z)*Diagonal(s)) ./ C)*Diagonal(B[k,:]))
 
         end
 
@@ -210,6 +206,8 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
             next!(pr)
 
         end
+
+        GC.gc(true)
 
         @printf("Iteration %d, ensemble performance is %f\n", iter, ensemble_performance(W, Z, scales))
 
