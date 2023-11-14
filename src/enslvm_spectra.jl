@@ -118,9 +118,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
     function objective_single_member(w, Z, s, b)
     #-------------------------------------------
 
-        local gₖ = f(w)
-        
-        sum((abs2.(X - gₖ(Z)*Diagonal(s)) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
+        sum((abs2.(X - f(w, Z)*Diagonal(s)) ./ C)*Diagonal(b)) + α*sum(abs2.(w)) # penalty on weights
 
     end
 
