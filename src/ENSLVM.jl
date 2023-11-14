@@ -1,6 +1,6 @@
 module ENSLVM
 
-    using LinearAlgebra, Zygote, Random, Printf, PyPlot, Optim, NNlib, ProgressMeter, ForwardDiff, Statistics
+    using LinearAlgebra, JLD2, Zygote, Random, Printf, PyPlot, Optim, NNlib, ProgressMeter, ForwardDiff, Statistics
 
     include("net.jl")
 
@@ -24,8 +24,12 @@ module ENSLVM
 
     export enslvm_spectra
 
-    # include("ensemblehessian.jl")
+    include("distill.jl")
 
-    # export ensemblehessian
+    export distill
+
+    include("getmodel.jl")
+
+    export getmodel
 
 end
