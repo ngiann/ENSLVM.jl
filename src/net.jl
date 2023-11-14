@@ -22,19 +22,23 @@ function unpack(n::net, param)
 
     MARK = 0
 
-    b1 = param[MARK+1:MARK+M]
+    b1 = @view param[MARK+1:MARK+M]
 
     MARK += M
 
-    W1 = reshape(param[MARK+1:MARK+M*Q], M, Q)
+    W1_ = @view param[MARK+1:MARK+M*Q]
+    
+    W1 = reshape(W1_, M, Q)
 
     MARK += M*Q
 
-    b2 = param[MARK+1:MARK+D]
+    b2 = @view param[MARK+1:MARK+D]
 
     MARK += D
 
-    W2 = reshape(param[MARK+1:MARK+D*M], D, M)
+    W2_ = @view param[MARK+1:MARK+D*M]
+    
+    W2 = reshape(W2_, D, M)
 
     MARK += D*M
 
