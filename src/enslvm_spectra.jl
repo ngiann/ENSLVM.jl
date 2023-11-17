@@ -201,6 +201,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
                 W[k] = optimize(obj, grad!, W[k], LBFGS(), optW).minimizer
                 
             end
+
             next!(pr)
 
         end
@@ -217,16 +218,10 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
     #-------------------------------------------------
 
     function predict(z)
-        
-        # local predₖ = map(w->f(w, z), W)
-        
-        # mean(predₖ), std(predₖ)
 
         F(W,z)
 
     end
-
-    #predict(k,z) = f(W[k], z)
     
     predict, W, Z, scales, B
     
