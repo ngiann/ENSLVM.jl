@@ -152,7 +152,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
           
             pr = Progress(N, desc = "Latent coordinates")
           
-            optZ = Optim.Options(iterations = 5, show_trace = false, show_every=1)
+            optZ = Optim.Options(iterations = 10, show_trace = false, show_every=1)
        
             local g = map(f, W)
 
@@ -186,7 +186,7 @@ function enslvm_spectra(X, C, W, Z, scales; labels=nothing, K = 10, M = 10, Q = 
 
         pr = Progress(K, desc = "Ensemble members")
 
-        optW = Optim.Options(iterations = 3, show_trace = false, show_every=1)
+        optW = Optim.Options(iterations = 10, show_trace = false, show_every=1)
     
         Threads.@threads for k in 1:K
 
