@@ -76,5 +76,5 @@ end
 
 
 function Base.show(io::IO, n::net)
-    print(io, "net with ",n.Q ," inputs, ",n.M," hidden units and ",n.D , " outputs.\n Activation function is ",n.h, ". \n Output function is ",n.o)
+    print(io, "net with ",n.Q," inputs, ",n.M," hidden units and ",n.D ," outputs.\n There is a total of ",numparam(n), " parameters.\n")
 end
