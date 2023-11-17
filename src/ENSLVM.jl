@@ -1,24 +1,24 @@
 module ENSLVM
 
-    using LinearAlgebra, JLD2, Zygote, Random, Printf, PyPlot, Optim, NNlib, ProgressMeter, ForwardDiff, Statistics
+    using LinearAlgebra, JLD2, Zygote, Random, Printf, Optim, NNlib, ProgressMeter, Statistics
 
     include("net.jl")
 
     export net, numparam
 
-    include("enslvm.jl")
+    # include("enslvm.jl")
 
-    export enslvm
+    # export enslvm
 
     include("bootstrapweights.jl")
 
-    include("enslvm_spectra2.jl")
+    # include("enslvm_spectra2.jl")
 
-    export enslvm_spectra2
+    # export enslvm_spectra2
 
-    include("enslvm_spectra3.jl")
+    # include("enslvm_spectra3.jl")
 
-    export enslvm_spectra3
+    # export enslvm_spectra3
 
     include("enslvm_spectra.jl") # ⟵ best so far
 
@@ -31,5 +31,5 @@ module ENSLVM
     include("getmodel.jl")
 
     export getmodel
-
+    
 end
