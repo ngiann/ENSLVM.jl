@@ -20,9 +20,9 @@ module ENSLVM
 
     # export enslvm_spectra3
 
-    include("enslvm_spectra.jl") # ⟵ best so far
+    include("enslvm_spectra_2.jl") # ⟵ best so far
 
-    export enslvm_spectra
+    export enslvm_spectra_2
 
     include("distill.jl")
 
